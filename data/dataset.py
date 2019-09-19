@@ -6,10 +6,10 @@ import os
 
 
 class HeadDataset(Dataset):
-    def __init__(self, dataset_dir, annots_path):
+    def __init__(self, dataset_dir, annots_path, transform):
         self.dataset_dir = dataset_dir
         self.data_list = self.parser(annots_path)
-        self.transform = Transform()
+        self.transform = transform
 
     def __getitem__(self, idx):
         data_info = self.data_list[idx]
@@ -17,7 +17,7 @@ class HeadDataset(Dataset):
         boxes = data_info['boxes']
         img = cv2.imread(img_path)
         img = img.transpose((2, 0, 1))
-        sample = self.transform({'img': img, 'boxes': boxes)
+        sample = self.transform({'img': img, 'boxes': boxes})
         return sample
 
     def parser(self, annots_path):
@@ -37,8 +37,3 @@ class HeadDataset(Dataset):
 
     def __len__(self):
         return len(self.data_list)
-
-
-# todo
-class Transform(object):
-    pass
