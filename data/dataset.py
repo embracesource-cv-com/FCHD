@@ -12,13 +12,13 @@ class HeadDataset(Dataset):
         self.transform = Transform()
 
     def __getitem__(self, idx):
-        data = self.data_list[idx]
-        img_path = data['img_path']
-        boxes = data['boxes']
+        data_info = self.data_list[idx]
+        img_path = data_info['img_path']
+        boxes = data_info['boxes']
         img = cv2.imread(img_path)
         img = img.transpose((2, 0, 1))
-        img, boxes, scale = self.transform(img, boxes)
-        return img, boxes, scale
+        sample = self.transform({'img': img, 'boxes': boxes)
+        return sample
 
     def parser(self, annots_path):
         data_list = []
