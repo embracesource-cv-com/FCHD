@@ -5,11 +5,16 @@ from utils.tools import generate_anchors
 
 
 class RPN(nn.Module):
-    def __init__(self, in_channels=512, out_channels=512, ratios=(0.5, 1, 2), scales=(8, 16, 32),
+    def __init__(self, c_in=512, c_out=512, ratios=(0.5, 1, 2), scales=(8, 16, 32),
                  feat_stride=16, proposal_creator_params=dict()):
         super(RPN, self).__init__()
         self.base_anchors = generate_anchors(16, ratios, scales)
         self.feat_stride = feat_stride
+        self.num_of_anchors = len(self.base_anchors)
+        self.proposal_layer = None  # todo: 生成 target anchor
+        self.conv1 = nn.Conv2d(c_in, c_out, 3, padding=1)
+        self.cls_layer = nn.Conv2d(c_out, 2 * self.num_of_anchors, 1)
+        self.regr_layer = nn.Conv2d(c_out, 4 * self.num_of_anchors, 1)
 
     def _shift(self, h, w):
         shift_x = np.arange(w) * self.feat_stride
