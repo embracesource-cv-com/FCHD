@@ -16,6 +16,10 @@ class RPN(nn.Module):
         self.cls_layer = nn.Conv2d(c_out, 2 * self.num_of_anchors, 1)
         self.regr_layer = nn.Conv2d(c_out, 4 * self.num_of_anchors, 1)
 
+    def forward(self, feature_map, img_size, scale):
+        # todo
+        pass
+
     def _shift(self, h, w):
         shift_x = np.arange(w) * self.feat_stride
         shift_y = np.arange(h) * self.feat_stride
