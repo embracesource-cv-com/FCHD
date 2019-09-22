@@ -15,6 +15,7 @@ class RPN(nn.Module):
         self.conv1 = nn.Conv2d(c_in, c_out, 3, padding=1)
         self.cls_layer = nn.Conv2d(c_out, 2 * self.num_of_anchors, 1)
         self.regr_layer = nn.Conv2d(c_out, 4 * self.num_of_anchors, 1)
+        self._weight_init()
 
     def forward(self, feature_map, img_size, scale):
         # todo
@@ -29,3 +30,11 @@ class RPN(nn.Module):
         all_anchors = self.base_anchors[np.newaxis, :, :] + shifts[:, np.newaxis, :]
         all_anchors = all_anchors.reshape(-1, 4)
         return all_anchors
+
+    def _weight_init(self, mean=0., std=0.01):
+        """
+        Initialize the weights of conv & cls & regr layer
+        """
+        for m in [self.conv1, self.cls_layer, self.regr_layer]:
+            m.weight.data.normal_(mean, std)
+            m.bias.data.zero_()
