@@ -18,8 +18,26 @@ class RPN(nn.Module):
         self._weight_init()
 
     def forward(self, feature_map, img_size, scale):
-        # todo
-        pass
+        n, _, h, w = feature_map.size()
+        anchors = self._shift(h, w)
+        x = F.relu(self.conv1(feature_map))  # shape(n,512,30,40)
+
+        rpn_regr = self.regr_layer(x)  # shape(n,12,30,40)
+        rpn_regr = rpn_regr.permute(0, 2, 3, 1).reshape(n, -1, 4)  # shape(n,3600,4)
+
+        rpn_cls = self.cls_layer(x)  # shape(n,6,30,40)
+        rpn_cls = rpn_cls.permute(0, 2, 3, 1)  # shape(n,30,40,6)
+        rpn_cls_fg = rpn_cls.reshape(n, h, w, self.num_of_anchors, 2)[:, :, :, :, 1]  # shape(n,30,40,3)
+        rpn_cls_fg = rpn_cls_fg.reshape(n, -1)  # shape(n,3600)
+        rpn_cls = rpn_cls.reshape(n, -1, 2)  # shape(n,3600,2)
+
+        rois, rois_scores = self.proposal_layer(
+            rpn_regr[0].numpy(),
+            rpn_cls_fg[0].numpy(),
+            anchors, img_size, scale
+        )
+
+        return rpn_regr, rpn_cls, rois, rois_scores, anchors
 
     def _shift(self, h, w):
         shift_x = np.arange(w) * self.feat_stride
@@ -38,3 +56,8 @@ class RPN(nn.Module):
         for m in [self.conv1, self.cls_layer, self.regr_layer]:
             m.weight.data.normal_(mean, std)
             m.bias.data.zero_()
+
+
+class ProposalCreator(object):
+    def __init__(self):
+        pass
