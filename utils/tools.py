@@ -18,13 +18,38 @@ def generate_anchors(base_size, ratios, scales):
     hs = hs.reshape(-1, 1)
     ws = ws.reshape(-1, 1)
 
-    x_ctr = y_ctr = 0.5 * (base_size - 1)
+    ctr_x = ctr_y = 0.5 * (base_size - 1)
     # the format is [ymin, xmin, ymax, xmax]
-    anchors = np.hstack((y_ctr - 0.5 * (hs - 1),
-                         x_ctr - 0.5 * (ws - 1),
-                         y_ctr + 0.5 * (hs - 1),
-                         x_ctr + 0.5 * (ws - 1),))
+    anchors = np.hstack((ctr_y - 0.5 * (hs - 1),
+                         ctr_x - 0.5 * (ws - 1),
+                         ctr_y + 0.5 * (hs - 1),
+                         ctr_x + 0.5 * (ws - 1),))
     return np.round(anchors)
+
+
+def bbox_regression(boxes, deltas):
+    hs = boxes[:, 2] - boxes[:, 0]
+    ws = boxes[:, 3] - boxes[:, 1]
+    ctr_y = boxes[:, 0] + 0.5 * hs
+    ctr_x = boxes[:, 1] + 0.5 * ws
+
+    dy = deltas[:, :1]
+    dx = deltas[:, 1:2]
+    dh = deltas[:, 2:3]
+    dw = deltas[:, 3:]
+
+    pred_ctr_y = dy * hs[:, np.newaxis] + ctr_y[:, np.newaxis]
+    pred_ctr_x = dx * ws[:, np.newaxis] + ctr_x[:, np.newaxis]
+    pred_h = np.exp(dh) * hs[:, np.newaxis]
+    pred_w = np.exp(dw) * ws[:, np.newaxis]
+
+    pred_boxes = np.zeros(deltas.shape)
+    pred_boxes[:, :1] = pred_ctr_y - 0.5 * pred_h  # y1
+    pred_boxes[:, 1:2] = pred_ctr_x - 0.5 * pred_w  # x1
+    pred_boxes[:, 2:3] = pred_ctr_y + 0.5 * pred_h  # y2
+    pred_boxes[:, 3:] = pred_ctr_x + 0.5 * pred_w  # x2
+
+    return pred_boxes
 
 
 if __name__ == '__main__':
