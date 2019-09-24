@@ -19,7 +19,7 @@ def generate_anchors(base_size, ratios, scales):
     ws = ws.reshape(-1, 1)
 
     ctr_x = ctr_y = 0.5 * (base_size - 1)
-    # the format is [ymin, xmin, ymax, xmax]
+    # the format is [y1, x1, y2, x2]
     anchors = np.hstack((ctr_y - 0.5 * (hs - 1),
                          ctr_x - 0.5 * (ws - 1),
                          ctr_y + 0.5 * (hs - 1),

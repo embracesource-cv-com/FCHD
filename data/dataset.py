@@ -31,7 +31,7 @@ class HeadDataset(Dataset):
                     assert len(coords_list) % 4 == 0
                     counts = len(coords_list) // 4
                     boxes = np.array(coords_list).reshape(-1, 4)
-                    boxes = boxes[:, [1, 0, 3, 2]]  # xmin,ymin,xmax,ymax -> ymin,xmin,ymax,xmax
+                    boxes = boxes[:, [1, 0, 3, 2]]  # x1,y1,x2,y2 -> y1,x2,y2,x2
                     data_list.append({'img_path': img_path, 'counts': counts, 'boxes': boxes})
         return data_list
 
