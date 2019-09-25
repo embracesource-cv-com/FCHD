@@ -64,5 +64,13 @@ def clip_boxes(boxes, img_size):
     return boxes
 
 
+def filter_boxes(boxes, min_size):
+    """Remove all boxes with any side smaller than min_size."""
+    hs = boxes[:, 2] - boxes[:, 0] + 1
+    ws = boxes[:, 3] - boxes[:, 1] + 1
+    keep = np.where((ws >= min_size) & (hs >= min_size))[0]
+    return keep
+
+
 if __name__ == '__main__':
     print(generate_anchors(base_size=16, ratios=[0.5, 1., 2.], scales=[8, 16, 32]))
