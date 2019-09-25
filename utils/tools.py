@@ -52,5 +52,17 @@ def bbox_regression(boxes, deltas):
     return pred_boxes
 
 
+def clip_boxes(boxes, img_size):
+    """
+    Clip boxes to image boundaries.
+    """
+    #  0 =< y1,y2 <= h
+    boxes[:, :4:2] = np.clip(boxes[:, :4:2], 0, img_size[0] - 1)
+    #  0 =< x1,x2 <= w
+    boxes[:, 1:4:2] = np.clip(boxes[:, 1:4:2], 0, img_size[1] - 1)
+
+    return boxes
+
+
 if __name__ == '__main__':
     print(generate_anchors(base_size=16, ratios=[0.5, 1., 2.], scales=[8, 16, 32]))
