@@ -2,6 +2,7 @@ import torch.nn.functional as F
 from torch import nn
 import numpy as np
 from utils.tools import generate_anchors
+from ..config import cfg
 
 
 class RPN(nn.Module):
@@ -59,5 +60,9 @@ class RPN(nn.Module):
 
 
 class ProposalCreator(object):
-    def __init__(self):
-        pass
+    def __init__(self, parent_model):
+        self.parent_model = parent_model
+        self.nms_thresh = cfg.RPN_NMS_THRESH
+        self.min_size = cfg.RPN_MIN_SIZE
+
+    
