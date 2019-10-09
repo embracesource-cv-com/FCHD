@@ -72,5 +72,34 @@ def filter_boxes(boxes, min_size):
     return keep
 
 
+def nms(boxes, thresh):
+    y1 = boxes[:, 0]
+    x1 = boxes[:, 1]
+    y2 = boxes[:, 2]
+    x2 = boxes[:, 3]
+
+    areas = (x2 - x1 + 1) * (y2 - y1 + 1)
+    order = np.arange(boxes.shape[0])
+
+    keep = []
+    while order.size() > 0:
+        i = order[0]
+        xx1 = np.maximum(x1[i], x1[order])
+        yy1 = np.maximum(y1[i], y1[order])
+        xx2 = np.minimum(x2[i], x2[order])
+        yy2 = np.minimum(y2[i], y2[order])
+
+        ws = np.maximum(0, xx2 - xx1 + 1)
+        hs = np.maximum(0, yy2 - yy1 + 1)
+        inter = ws * hs
+        ious = inter / (areas[i] + areas[order] - inter)
+
+        inds = np.where(ious <= thresh)[0]
+        order = order[inds]
+        keep.append(i)
+
+    return keep
+
+
 if __name__ == '__main__':
     print(generate_anchors(base_size=16, ratios=[0.5, 1., 2.], scales=[8, 16, 32]))
