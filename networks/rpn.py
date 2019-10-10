@@ -2,8 +2,7 @@ import torch.nn.functional as F
 from torch import nn
 import numpy as np
 from utils.tools import generate_anchors
-from ..config import cfg
-from utils import tools
+from .proposal_layer import ProposalLayer
 
 
 class RPN(nn.Module):
@@ -13,7 +12,7 @@ class RPN(nn.Module):
         self.base_anchors = generate_anchors(16, ratios, scales)
         self.feat_stride = feat_stride
         self.num_of_anchors = len(self.base_anchors)
-        self.proposal_layer = ProposalCreator(self)
+        self.proposal_layer = ProposalLayer(self)
         self.conv1 = nn.Conv2d(c_in, c_out, 3, padding=1)
         self.cls_layer = nn.Conv2d(c_out, 2 * self.num_of_anchors, 1)
         self.regr_layer = nn.Conv2d(c_out, 4 * self.num_of_anchors, 1)
@@ -58,39 +57,3 @@ class RPN(nn.Module):
         for m in [self.conv1, self.cls_layer, self.regr_layer]:
             m.weight.data.normal_(mean, std)
             m.bias.data.zero_()
-
-
-class ProposalCreator(object):
-    def __init__(self, parent_model):
-        self.parent_model = parent_model
-        self.nms_thresh = cfg.RPN_NMS_THRESH
-        self.min_size = cfg.RPN_MIN_SIZE
-
-    def __call__(self, deltas, scores, anchors, img_size, scale):
-        if self.parent_model.training:
-            pre_nms_top_N = cfg.RPN_TRAIN_PRE_NMS_TOP_N
-            post_nms_top_N = cfg.RPN_TRAIN_POST_NMS_TOP_N
-        else:
-            pre_nms_top_N = cfg.RPN_TEST_PRE_NMS_TOP_N
-            post_nms_top_N = cfg.RPN_TEST_POST_NMS_TOP_N
-
-        proposals = tools.bbox_regression(anchors, deltas)
-        proposals = tools.clip_boxes(proposals, img_size)
-
-        keep = tools.filter_boxes(proposals, self.min_size * scale)
-        proposals = proposals[keep, :]
-        scores = scores[keep]
-
-        order = scores.argsort()[::-1]
-        if pre_nms_top_N > 0:
-            order = order[:pre_nms_top_N]
-        proposals = proposals[order, :]
-        scores = scores[order]
-
-        keep = tools.nms(proposals, self.nms_thresh)
-        if post_nms_top_N > 0:
-            keep = keep[:post_nms_top_N]
-        rois = proposals[keep, :]
-        scores = scores[keep]
-
-        return rois, scores
