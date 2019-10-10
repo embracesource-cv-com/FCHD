@@ -101,9 +101,9 @@ def nms(boxes, thresh):
     return keep
 
 
-def compute_ious(boxes_a, boxes_b):
+def calc_ious(boxes_a, boxes_b):
     """
-    compute IOUs between boxes a and boxes b
+    Calculate IOUs between boxes a and boxes b
     :param boxes_a: numpy array, shape(N, 4)
     :param boxes_b: numpy array, shape(M, 4)
     :return: numpy array, shape(N, M)
