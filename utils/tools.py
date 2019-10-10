@@ -101,5 +101,31 @@ def nms(boxes, thresh):
     return keep
 
 
+def compute_ious(boxes_a, boxes_b):
+    """
+    compute IOUs between boxes a and boxes b
+    :param boxes_a: numpy array, shape(N, 4)
+    :param boxes_b: numpy array, shape(M, 4)
+    :return: numpy array, shape(N, M)
+    """
+    boxes_a = np.expand_dims(boxes_a, axis=1)  # (N, 1, 4)
+    boxes_b = np.expand_dims(boxes_b, axis=0)  # (1, M, 4)
+
+    areas_a = (boxes_a[..., 2] - boxes_a[..., 0] + 1) * (boxes_a[..., 3] - boxes_a[..., 1] + 1)  # (N, 1)
+    areas_b = (boxes_b[..., 2] - boxes_b[..., 0] + 1) * (boxes_b[..., 3] - boxes_b[..., 1] + 1)  # (1, M)
+
+    xx1 = np.maximum(boxes_a[..., 1], boxes_b[..., 1])  # (N, M)
+    yy1 = np.maximum(boxes_a[..., 0], boxes_b[..., 0])
+    xx2 = np.minimum(boxes_a[..., 3], boxes_b[..., 3])
+    yy2 = np.minimum(boxes_a[..., 2], boxes_b[..., 2])
+
+    ws = np.maximum(0, xx2 - xx1 + 1)
+    hs = np.maximum(0, yy2 - yy1 + 1)
+    inters = ws * hs
+
+    ious = inters / (areas_a + areas_b - inters)
+    return ious
+
+
 if __name__ == '__main__':
     print(generate_anchors(base_size=16, ratios=[0.5, 1., 2.], scales=[8, 16, 32]))
