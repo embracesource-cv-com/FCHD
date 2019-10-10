@@ -13,7 +13,7 @@ class RPN(nn.Module):
         self.base_anchors = generate_anchors(16, ratios, scales)
         self.feat_stride = feat_stride
         self.num_of_anchors = len(self.base_anchors)
-        self.proposal_layer = None  # todo: 生成 target anchor
+        self.proposal_layer = ProposalCreator(self)
         self.conv1 = nn.Conv2d(c_in, c_out, 3, padding=1)
         self.cls_layer = nn.Conv2d(c_out, 2 * self.num_of_anchors, 1)
         self.regr_layer = nn.Conv2d(c_out, 4 * self.num_of_anchors, 1)
@@ -90,7 +90,7 @@ class ProposalCreator(object):
         keep = tools.nms(proposals, self.nms_thresh)
         if post_nms_top_N > 0:
             keep = keep[:post_nms_top_N]
-        proposals = proposals[keep, :]
+        rois = proposals[keep, :]
         scores = scores[keep]
 
-        return proposals, scores
+        return rois, scores
