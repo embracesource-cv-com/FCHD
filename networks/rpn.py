@@ -45,7 +45,7 @@ class RPN(nn.Module):
         shift_y = np.arange(h) * self.feat_stride
         shift_x, shift_y = np.meshgrid(shift_x, shift_y)
         shifts = np.vstack((shift_y.ravel(), shift_x.ravel(),
-                            shift_y.ravel(), shift_y.ravel())).transpose()
+                            shift_y.ravel(), shift_x.ravel())).transpose()
         all_anchors = self.base_anchors[np.newaxis, :, :] + shifts[:, np.newaxis, :]
         all_anchors = all_anchors.reshape(-1, 4)
         return all_anchors
