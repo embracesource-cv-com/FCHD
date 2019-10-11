@@ -52,6 +52,27 @@ def bbox_regression(boxes, deltas):
     return pred_boxes
 
 
+def bbox_transform(anchor_boxes, gt_boxes):
+    anchor_hs = anchor_boxes[:, 2] - anchor_boxes[:, 0]
+    anchor_ws = anchor_boxes[:, 3] - anchor_boxes[:, 1]
+    anchor_ctr_y = anchor_boxes[:, 0] + 0.5 * anchor_hs
+    anchor_ctr_x = anchor_boxes[:, 1] + 0.5 * anchor_ws
+
+    gt_hs = gt_boxes[:, 2] - gt_boxes[:, 0]
+    gt_ws = gt_boxes[:, 3] - gt_boxes[:, 1]
+    gt_ctr_y = gt_boxes[:, 0] + 0.5 * gt_hs
+    gt_ctr_x = gt_boxes[:, 1] + 0.5 * gt_ws
+
+    dy = (gt_ctr_y - anchor_ctr_y) / anchor_hs
+    dx = (gt_ctr_x - anchor_ctr_x) / anchor_ws
+    dh = np.log(gt_hs / anchor_hs)
+    dw = np.log(gt_ws / anchor_ws)
+
+    targets = np.vstack((dy, dx, dh, dw)).transpose()
+
+    return targets
+
+
 def clip_boxes(boxes, img_size):
     """
     Clip boxes to image boundaries.
