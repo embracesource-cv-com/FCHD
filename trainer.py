@@ -44,3 +44,6 @@ class Trainer(nn.Module):
         self.rpn_cm.add(valid_pred_cls, valid_gt_cls)
 
         return self.loss_tuple(*loss_list), rois, rois_scores
+
+    def train_step(self, imgs, bboxes, scale):
+        pass
