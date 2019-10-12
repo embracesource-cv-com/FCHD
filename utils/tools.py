@@ -98,9 +98,10 @@ def nms(boxes, thresh):
     x1 = boxes[:, 1]
     y2 = boxes[:, 2]
     x2 = boxes[:, 3]
+    scores = boxes[:, 4]
 
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
-    order = np.arange(boxes.shape[0])
+    order = scores.argsort()[::-1]
 
     keep = []
     while order.size() > 0:

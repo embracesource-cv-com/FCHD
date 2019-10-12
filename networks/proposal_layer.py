@@ -1,4 +1,5 @@
 from utils import tools
+import numpy as np
 from ..config import cfg
 
 
@@ -29,7 +30,7 @@ class ProposalLayer(object):
         proposals = proposals[order, :]
         scores = scores[order]
 
-        keep = tools.nms(proposals, self.nms_thresh)
+        keep = tools.nms(np.stack((proposals, scores.reshape(-1, 1))), self.nms_thresh)
         if post_nms_top_N > 0:
             keep = keep[:post_nms_top_N]
         rois = proposals[keep, :]
