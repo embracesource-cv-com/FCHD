@@ -2,6 +2,7 @@ from skimage import transform
 from torchvision import transforms
 import torch
 import numpy as np
+from ..config import cfg
 
 
 class Rescale(object):
@@ -40,3 +41,10 @@ class Normalize(object):
         sample['img'] = img
 
         return sample
+
+
+def inverse_normalize(img):
+    if cfg.CAFFE_PRETRAIN_PATH:
+        img = img + (np.array([122.7717, 115.9465, 102.9801]).reshape(3, 1, 1))
+        return img[::-1, :, :]
+    return (img * 0.225 + 0.45).clip(min=0, max=1) * 255
