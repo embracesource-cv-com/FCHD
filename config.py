@@ -14,5 +14,13 @@ class Config(object):
     RPN_TEST_POST_NMS_TOP_N = 300,
     RPN_MIN_SIZE = 16
 
+    ANCHOR_RATIOS = [1]
+    ANCHOR_SCALES = [8, 16]
+
+    EPOCHS = 15
+    DEBUG = True
+    PLOT_INTERVAL = 2
+    VISDOM_ENV = 'head_detector'
+
 
 cfg = Config()
