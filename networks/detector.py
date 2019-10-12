@@ -5,6 +5,7 @@ from torch.nn import functional as F
 import numpy as np
 from .base_net import BaseVGG16
 from .rpn import RPN
+from utils import tools
 
 
 class HeadDetector(nn.Module):
@@ -21,6 +22,25 @@ class HeadDetector(nn.Module):
         feature_map = self.extractor(x)
         rpn_regr, rpn_cls, rois, rois_scores, anchors = self.rpn(feature_map, img_size, scale)
         return rpn_regr, rpn_cls, rois, rois_scores, anchors
+
+    def predict(self, x, scale, nms_thresh=0.3, score_thresh=0.01):
+        h, w = x.size()[2:]
+        _, _, rois, rois_scores, _ = self.forward(x, scale)
+        rois[:, :4:2] = np.clip(rois[:, :4:2], 0, h)
+        rois[:, 1:4:2] = np.clip(rois[:, 1:4:2], 0, w)
+
+        probs = F.softmax(torch.from_numpy(rois_scores))
+        probs = probs.numpy()
+
+        mask = probs > score_thresh
+        boxes = rois[mask]
+        scores = probs[mask]
+
+        keep = tools.nms(np.stack((boxes, scores.reshape(-1, 1))), nms_thresh)
+        boxes = boxes[keep]
+        scores = scores[keep]
+
+        return boxes, scores
 
     def get_optimizer(self):
         params = []
