@@ -5,6 +5,8 @@ from networks.anchor_target_layer import AnchorTargetLayer
 from torchnet.meter import ConfusionMeter, AverageValueMeter
 from utils import losses
 from collections import namedtuple
+from utils.visualize import Visualizer
+from config import cfg
 
 
 class Trainer(nn.Module):
@@ -17,7 +19,7 @@ class Trainer(nn.Module):
                                      ['rpn_regr_loss',
                                       'rpn_cls_loss',
                                       'total_loss'])
-        self.vis = None  # todo:
+        self.vis = Visualizer(env=cfg.VISDOM_ENV)
         self.rpn_cm = ConfusionMeter(2)
         self.meters = {k: AverageValueMeter() for k in self.loss_tuple._fields}  # average loss
 
@@ -62,3 +64,6 @@ class Trainer(nn.Module):
         for meter in self.meters.values():
             meter.reset()
         self.rpn_cm.reset()
+
+    def get_meter_data(self):
+        return {k: v.value()[0] for k, v in self.meters.items()}
