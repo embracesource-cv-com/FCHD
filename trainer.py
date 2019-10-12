@@ -45,5 +45,15 @@ class Trainer(nn.Module):
 
         return self.loss_tuple(*loss_list), rois, rois_scores
 
-    def train_step(self, imgs, bboxes, scale):
-        pass
+    def train_step(self, x, boxes, scale):
+        loss_tuple, rois, rois_scores = self.forward(x, boxes, scale)
+        self.optimizer.zero_grad()
+        loss_tuple.total_loss.backward()
+        self.optimizer.step()
+        self.update_meters(loss_tuple)
+        return loss_tuple, rois, rois_scores
+
+    def update_meters(self, loss_tuple):
+        loss_d = {k: v.item() for k, v in loss_tuple._asdict().items()}
+        for key, meter in self.meters.items():
+            meter.add(loss_d[key])
