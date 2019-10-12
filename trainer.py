@@ -57,3 +57,8 @@ class Trainer(nn.Module):
         loss_d = {k: v.item() for k, v in loss_tuple._asdict().items()}
         for key, meter in self.meters.items():
             meter.add(loss_d[key])
+
+    def reset_meters(self):
+        for meter in self.meters.values():
+            meter.reset()
+        self.rpn_cm.reset()
