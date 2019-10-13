@@ -67,3 +67,6 @@ class Trainer(nn.Module):
 
     def get_meter_data(self):
         return {k: v.value()[0] for k, v in self.meters.items()}
+
+    def save(self):
+        pass

@@ -59,6 +59,13 @@ def train():
                 trainer.vis.img('pred_img', pred_img)
                 trainer.vis.text(str(trainer.rpn_cm.value().tolist()), win='rpn_cm')
 
+            avg_accuracy = evaluate(val_dataloader, head_detector)
+
+            print("[INFO] Epoch {} of {}.".format(epoch + 1, cfg.EPOCHS))
+            print("  Validate average accuracy:\t{:.3f}".format(avg_accuracy))
+
+            model_path = trainer.save(best_map=avg_accuracy)
+
 
 def evaluate(val_dataloader, head_detector):
     """
@@ -67,7 +74,7 @@ def evaluate(val_dataloader, head_detector):
     model given as the argument to the function.
     """
     img_counts = 0
-    correct_prob = 0.0
+    accuracy = 0.0
 
     for data in val_dataloader:
         img, boxes, scale = data['img'], data['boxes'], data['scale']
@@ -81,11 +88,11 @@ def evaluate(val_dataloader, head_detector):
             max_ious = ious.max(axis=1)
             correct_counts = len(np.where(max_ious >= 0.5)[0])
             gt_counts = len(gts)
-            correct_prob += correct_counts / gt_counts
+            accuracy += correct_counts / gt_counts
             img_counts += 1
 
-    avg_correct = correct_prob / img_counts
-    return avg_correct
+    avg_accuracy = accuracy / img_counts
+    return avg_accuracy
 
 
 if __name__ == '__main__':
