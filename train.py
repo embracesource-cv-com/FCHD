@@ -68,6 +68,7 @@ def evaluate(val_dataloader, head_detector):
     """
     img_counts = 0
     correct_prob = 0.0
+
     for data in val_dataloader:
         img, boxes, scale = data['img'], data['boxes'], data['scale']
         img, boxes = img.cuda(), boxes.cuda()
@@ -82,7 +83,9 @@ def evaluate(val_dataloader, head_detector):
             gt_counts = len(gts)
             correct_prob += correct_counts / gt_counts
             img_counts += 1
-    return correct_prob / img_counts
+
+    avg_correct = correct_prob / img_counts
+    return avg_correct
 
 
 if __name__ == '__main__':
