@@ -3,7 +3,9 @@
 
 class Config(object):
     DATASET_DIR = r'G:\fchd-dataset\brainwash'
-    ANNOTS_FILE = 'brainwash_train.idl'
+    TRAIN_ANNOTS_FILE = 'brainwash_train.idl'
+    VAL_ANNOTS_FILE = 'brainwash_val.idl'
+
     CAFFE_PRETRAIN = True
     CAFFE_PRETRAIN_PATH = ''
 
