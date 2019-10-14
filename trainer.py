@@ -90,3 +90,7 @@ class Trainer(nn.Module):
             self.optimizer.load_state_dict(state_dict['optimizer'])
 
         return self
+
+    def scale_lr(self, decay=0.1):
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] *= decay
