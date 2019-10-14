@@ -13,7 +13,7 @@ class Rescale(object):
     def __call__(self, sample):
         img, boxes = sample['img'], sample['boxes']
         c, h, w = img.shape
-        scale = min(self.min_size / min(h, w), self.max_size / max(h, w))
+        scale = min(self.min_size // min(h, w), self.max_size // max(h, w))
         img = img / 255
         img = transform.resize(img, (c, h * scale, w * scale), mode='reflect')
         new_boxes = boxes * scale
