@@ -104,7 +104,7 @@ def nms(boxes, thresh):
     order = scores.argsort()[::-1]
 
     keep = []
-    while order.size() > 0:
+    while order.size > 0:
         i = order[0]
         xx1 = np.maximum(x1[i], x1[order])
         yy1 = np.maximum(y1[i], y1[order])
