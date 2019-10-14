@@ -1,6 +1,6 @@
 from utils import tools
 import numpy as np
-from ..config import cfg
+from config import cfg
 
 
 class ProposalLayer(object):

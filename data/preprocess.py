@@ -2,7 +2,7 @@ from skimage import transform
 from torchvision import transforms
 import torch
 import numpy as np
-from ..config import cfg
+from config import cfg
 
 
 class Rescale(object):
