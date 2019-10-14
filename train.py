@@ -5,14 +5,13 @@ from data.dataset import HeadDataset
 from data.preprocess import Rescale, Normalize, inverse_normalize
 from config import cfg
 from utils.visualize import check_raw_data, check_transformed_data, visdom_bbox
-import torch
 import numpy as np
 import os
-import cv2
 import random
 from networks.detector import HeadDetector
 from trainer import Trainer
 from utils import tools
+import time
 
 
 def train():
@@ -59,12 +58,17 @@ def train():
                 trainer.vis.img('pred_img', pred_img)
                 trainer.vis.text(str(trainer.rpn_cm.value().tolist()), win='rpn_cm')
 
-            avg_accuracy = evaluate(val_dataloader, head_detector)
+        avg_accuracy = evaluate(val_dataloader, head_detector)
 
-            print("[INFO] Epoch {} of {}.".format(epoch + 1, cfg.EPOCHS))
-            print("  Validate average accuracy:\t{:.3f}".format(avg_accuracy))
+        print("[INFO] Epoch {} of {}.".format(epoch + 1, cfg.EPOCHS))
+        print("  Validate average accuracy:\t{:.3f}".format(avg_accuracy))
 
-            model_path = trainer.save(best_map=avg_accuracy)
+        time_str = time.strftime('%m%d%H%M')
+        save_path = os.path.join(cfg.MODEL_DIR, 'checkpoint_{}_{}.pth'.format(time_str, avg_accuracy))
+        trainer.save(best_map=avg_accuracy)
+        if epoch == 8:
+            trainer.load(save_path)
+            trainer.scale_lr()
 
 
 def evaluate(val_dataloader, head_detector):
