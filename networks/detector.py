@@ -36,7 +36,7 @@ class HeadDetector(nn.Module):
         boxes = rois[mask]
         scores = probs[mask]
 
-        keep = tools.nms(np.stack((boxes, scores.reshape(-1, 1))), nms_thresh)
+        keep = tools.nms(np.hstack((boxes, scores.reshape(-1, 1))), nms_thresh)
         boxes = boxes[keep]
         scores = scores[keep]
 
