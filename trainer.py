@@ -7,6 +7,7 @@ from utils import losses
 from collections import namedtuple
 from utils.visualize import Visualizer
 from config import cfg
+import time
 
 
 class Trainer(nn.Module):
@@ -68,5 +69,24 @@ class Trainer(nn.Module):
     def get_meter_data(self):
         return {k: v.value()[0] for k, v in self.meters.items()}
 
-    def save(self):
-        pass
+    def save(self, path, save_optimizer=False):
+        save_dict = dict()
+        save_dict['model'] = self.head_detector.state_dict()
+        # save_dict['config'] = opt._state_dict()
+        # save_dict['other_info'] = kwargs
+        save_dict['vis_info'] = self.vis.state_dict()
+
+        if save_optimizer:
+            save_dict['optimizer'] = self.optimizer.state_dict()
+
+        torch.save(save_dict, path)
+        self.vis.save([self.vis.env])
+
+    def load(self, path, load_optimizer=True):
+        state_dict = torch.load(path)
+        self.head_detector.load_state_dict(state_dict['model'])
+
+        if 'optimizer' in state_dict and load_optimizer:
+            self.optimizer.load_state_dict(state_dict['optimizer'])
+
+        return self
