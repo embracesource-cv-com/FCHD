@@ -23,6 +23,7 @@ class Config(object):
     DEBUG = True
     PLOT_INTERVAL = 2
     VISDOM_ENV = 'head_detector'
+    MODEL_DIR = './checkpoints'
 
 
 cfg = Config()
