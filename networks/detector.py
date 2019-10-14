@@ -11,7 +11,7 @@ from utils import tools
 class HeadDetector(nn.Module):
     def __init__(self, ratios, scales):
         super(HeadDetector, self).__init__()
-        self.extractor = BaseVGG16(caffe_pretrain=True)
+        self.extractor = BaseVGG16(caffe_pretrain=True)()
         self.rpn = RPN(ratios=ratios, scales=scales)
         self.lr = 0.001
         self.weight_decay = 0.0005
