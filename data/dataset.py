@@ -44,6 +44,7 @@ class HeadDataset(Dataset):
                     counts = len(coords_list) // 4
                     boxes = np.array(coords_list).reshape(counts, 4)
                     boxes = boxes[:, [1, 0, 3, 2]]  # x1,y1,x2,y2 -> y1,x1,y2,x2
+
                     data_list.append({'img_path': img_path, 'counts': counts, 'boxes': boxes})
 
         return data_list
