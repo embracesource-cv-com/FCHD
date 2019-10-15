@@ -16,22 +16,28 @@ class HeadDataset(Dataset):
         img_path = data_info['img_path']
         boxes = data_info['boxes']
         img = cv2.imread(img_path)
-        img = img.transpose((2, 0, 1))
+        img = img.transpose((2, 0, 1))  # (H,W,C) -> (C,H,W)
         sample = self.transform({'img': img, 'boxes': boxes})
         return sample
 
     def parser(self, annots_path):
+        """
+        Parsing the annotation file
+        :param annots_path: str, the absolute path of the annotation file
+        :return: list of dict
+        """
         data_list = []
         with open(annots_path, 'r') as fp:
             for line in fp.readlines():
                 if ':' in line:
-                    img_name = re.search(r'"(.*)"', line).group(1)
+                    img_name = re.search(r'"(.*)"', line).group(1)  # extract image name
                     img_path = os.path.join(self.dataset_dir, img_name)
-                    coords_list = [float(i) for i in re.findall(r'\d+\.\d+', line)]
-                    assert len(coords_list) % 4 == 0
+                    coords_list = re.findall(r'\d+\.\d+', line)  # extract coordinates
+                    coords_list = list(map(float, coords_list))
+                    assert len(coords_list) % 4 == 0, 'The number of coordinates must be divisible by 4.'
                     counts = len(coords_list) // 4
                     boxes = np.array(coords_list).reshape(-1, 4)
-                    boxes = boxes[:, [1, 0, 3, 2]]  # x1,y1,x2,y2 -> y1,x2,y2,x2
+                    boxes = boxes[:, [1, 0, 3, 2]]  # x1,y1,x2,y2 -> y1,x1,y2,x2
                     data_list.append({'img_path': img_path, 'counts': counts, 'boxes': boxes})
         return data_list
 
