@@ -27,18 +27,25 @@ class HeadDataset(Dataset):
         :return: list of dict
         """
         data_list = []
+
         with open(annots_path, 'r') as fp:
             for line in fp.readlines():
                 if ':' in line:
-                    img_name = re.search(r'"(.*)"', line).group(1)  # extract image name
+                    # extract image name
+                    img_name = re.search(r'"(.*)"', line).group(1)
                     img_path = os.path.join(self.dataset_dir, img_name)
-                    coords_list = re.findall(r'\d+\.\d+', line)  # extract coordinates
+
+                    # extract coordinates
+                    coords_list = re.findall(r'\d+\.\d+', line)
                     coords_list = list(map(float, coords_list))
                     assert len(coords_list) % 4 == 0, 'The number of coordinates must be divisible by 4.'
+
+                    # convert to numpy array
                     counts = len(coords_list) // 4
-                    boxes = np.array(coords_list).reshape(-1, 4)
+                    boxes = np.array(coords_list).reshape(counts, 4)
                     boxes = boxes[:, [1, 0, 3, 2]]  # x1,y1,x2,y2 -> y1,x1,y2,x2
                     data_list.append({'img_path': img_path, 'counts': counts, 'boxes': boxes})
+
         return data_list
 
     def __len__(self):
