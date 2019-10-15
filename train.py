@@ -23,14 +23,6 @@ def train():
     print('[INFO] Load datasets.\n Training set size:{}, Verification set size:{}'
           .format(len(train_dataset), len(val_dataset)))
 
-    # if cfg.DEBUG:
-    #     idx = random.randint(1, len(train_dataset))
-    #     data = train_dataset.data_list[idx]
-    #     check_raw_data(data)
-    #     sample = train_dataset[idx]
-    #     img, boxes = sample['img'], sample['boxes']
-    #     check_transformed_data(img, boxes)
-    
     train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=True)
 
