@@ -16,6 +16,7 @@ class Config(object):
     RPN_TEST_POST_NMS_TOP_N = 300
     RPN_MIN_SIZE = 16
 
+    ANCHOR_BASE_SIZE = 16
     ANCHOR_RATIOS = [1]
     ANCHOR_SCALES = [8, 16]
 
