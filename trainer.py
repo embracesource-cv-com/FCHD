@@ -7,7 +7,6 @@ from utils import losses
 from collections import namedtuple
 from utils.visualize import Visualizer
 from config import cfg
-import time
 
 
 class Trainer(nn.Module):
@@ -33,10 +32,10 @@ class Trainer(nn.Module):
         rpn_regr, rpn_cls, rois, rois_scores, anchors = self.head_detector.rpn(feature_map, img_size, scale)
         boxes, rpn_regr, rpn_cls = boxes[0], rpn_regr[0], rpn_cls[0]
 
-        gt_rpn_regr, gt_rpn_cls = self.anchor_target_layer(boxes, anchors, img_size)
-        gt_rpn_regr = torch.from_numpy(gt_rpn_regr).cuda()
-        gt_rpn_cls = torch.from_numpy(gt_rpn_cls).cuda()
-        
+        gt_rpn_regr, gt_rpn_cls = self.anchor_target_layer(boxes.cpu().numpy(), anchors, img_size)
+        gt_rpn_regr = torch.from_numpy(gt_rpn_regr).cuda().float()
+        gt_rpn_cls = torch.from_numpy(gt_rpn_cls).cuda().long()
+
         rpn_regr_loss = losses.rpn_regr_loss(rpn_regr, gt_rpn_regr, gt_rpn_cls)
         rpn_cls_loss = F.cross_entropy(rpn_cls, gt_rpn_cls, ignore_index=-1)
         total_loss = rpn_regr_loss + rpn_cls_loss
@@ -44,17 +43,17 @@ class Trainer(nn.Module):
 
         valid_gt_cls = gt_rpn_cls[gt_rpn_cls > -1]
         valid_pred_cls = rpn_cls[gt_rpn_cls > -1]
-        self.rpn_cm.add(valid_pred_cls, valid_gt_cls)
+        self.rpn_cm.add(valid_pred_cls.detach(), valid_gt_cls.detach())
 
         return self.loss_tuple(*loss_list), rois, rois_scores
 
     def train_step(self, x, boxes, scale):
-        loss_tuple, rois, rois_scores = self.forward(x, boxes, scale)
+        loss_tuple, _, _ = self.forward(x, boxes, scale)
         self.optimizer.zero_grad()
         loss_tuple.total_loss.backward()
         self.optimizer.step()
         self.update_meters(loss_tuple)
-        return loss_tuple, rois, rois_scores
+        # return loss_tuple, rois, rois_scores
 
     def update_meters(self, loss_tuple):
         loss_d = {k: v.item() for k, v in loss_tuple._asdict().items()}

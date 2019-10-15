@@ -7,7 +7,6 @@ from config import cfg
 from utils.visualize import check_raw_data, check_transformed_data, visdom_bbox
 import numpy as np
 import os
-import random
 from networks.detector import HeadDetector
 from trainer import Trainer
 from utils import tools
@@ -21,13 +20,16 @@ def train():
     train_dataset = HeadDataset(cfg.DATASET_DIR, train_annots_path, transform)
     val_dataset = HeadDataset(cfg.DATASET_DIR, val_annots_path, transform)
 
-    if cfg.DEBUG:
-        idx = random.randint(1, len(train_dataset))
-        data = train_dataset.data_list[idx]
-        check_raw_data(data)
-        sample = train_dataset[idx]
-        img, boxes = sample['img'], sample['boxes']
-        check_transformed_data(img, boxes)
+    print('[INFO] Load datasets.\n Training set size:{}, Verification set size:{}'
+          .format(len(train_dataset), len(val_dataset)))
+
+    # if cfg.DEBUG:
+    #     idx = random.randint(1, len(train_dataset))
+    #     data = train_dataset.data_list[idx]
+    #     check_raw_data(data)
+    #     sample = train_dataset[idx]
+    #     img, boxes = sample['img'], sample['boxes']
+    #     check_transformed_data(img, boxes)
     
     train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=True)
@@ -35,23 +37,21 @@ def train():
     head_detector = HeadDetector(ratios=cfg.ANCHOR_RATIOS, scales=cfg.ANCHOR_SCALES)
     trainer = Trainer(head_detector).cuda()
 
+    print('[INFO] Start training...')
     for epoch in range(cfg.EPOCHS):
         trainer.reset_meters()
         for i, data in enumerate(train_dataloader, 1):
             img, boxes, scale = data['img'], data['boxes'], data['scale']
-            img, boxes = img.cuda(), boxes.cuda()
+            img, boxes = img.cuda().float(), boxes.cuda()
+            scale = scale.item()
 
-            if cfg.DEBUG:
-                print('img size:', img.size())
-                print('bboxes size:', boxes.size())
-                print('scale:', scale)
-
-            _, _, _ = trainer.train_step(img, boxes, scale)
+            trainer.train_step(img, boxes, scale)
 
             if i % cfg.PLOT_INTERVAL == 0:
                 trainer.vis.plot_many(trainer.get_meter_data())
-                origin_img = inverse_normalize(img[0].numpy())
-                gt_img = visdom_bbox(origin_img, boxes[0].numpy())
+                origin_img = inverse_normalize(img[0].cpu().numpy())
+                origin_img = origin_img[::-1, :, :]
+                gt_img = visdom_bbox(origin_img, boxes[0].cpu().numpy())
                 trainer.vis.img('gt_img', gt_img)
                 preds, _ = trainer.head_detector.predict(img, scale)
                 pred_img = visdom_bbox(origin_img, preds)
@@ -61,30 +61,27 @@ def train():
         avg_accuracy = evaluate(val_dataloader, head_detector)
 
         print("[INFO] Epoch {} of {}.".format(epoch + 1, cfg.EPOCHS))
-        print("  Validate average accuracy:\t{:.3f}".format(avg_accuracy))
+        print("\tValidate average accuracy: {:.3f}".format(avg_accuracy))
 
         time_str = time.strftime('%m%d%H%M')
         save_path = os.path.join(cfg.MODEL_DIR, 'checkpoint_{}_{}.pth'.format(time_str, avg_accuracy))
-        trainer.save(best_map=avg_accuracy)
+        trainer.save(save_path)
         if epoch == 8:
             trainer.load(save_path)
             trainer.scale_lr()
 
 
 def evaluate(val_dataloader, head_detector):
-    """
-    Given the dataloader of the test split compute the
-    average corLoc of the dataset using the head detector
-    model given as the argument to the function.
-    """
     img_counts = 0
     accuracy = 0.0
 
     for data in val_dataloader:
         img, boxes, scale = data['img'], data['boxes'], data['scale']
-        img, boxes = img.cuda(), boxes.cuda()
+        img, boxes = img.cuda().float(), boxes.cuda()
+        scale = scale.item()
+
         preds, _ = head_detector.predict(img, scale)
-        gts = boxes[0]
+        gts = boxes[0].cpu().numpy()
         if len(preds) == 0:
             img_counts += 1
         else:
@@ -100,4 +97,5 @@ def evaluate(val_dataloader, head_detector):
 
 
 if __name__ == '__main__':
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     train()
