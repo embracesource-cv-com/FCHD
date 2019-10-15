@@ -13,11 +13,16 @@ class Rescale(object):
     def __call__(self, sample):
         img, boxes = sample['img'], sample['boxes']
         c, h, w = img.shape
+
         scale = min(self.min_size // min(h, w), self.max_size // max(h, w))
         img = img / 255
         img = transform.resize(img, (c, h * scale, w * scale), mode='reflect')
-        new_boxes = boxes * scale
-        return {'img': img, 'boxes': new_boxes, 'scale': scale}
+        boxes = boxes * scale
+
+        sample['img'] = img
+        sample['boxes'] = boxes
+        sample['scale'] = scale
+        return sample
 
 
 class Normalize(object):
@@ -45,6 +50,8 @@ class Normalize(object):
 
 def inverse_normalize(img):
     if cfg.CAFFE_PRETRAIN_PATH:
-        img = img + (np.array([122.7717, 115.9465, 102.9801]).reshape(3, 1, 1))
-        return img[::-1, :, :]
-    return (img * 0.225 + 0.45).clip(min=0, max=1) * 255
+        mean = np.array([122.7717, 115.9465, 102.9801]).reshape(3, 1, 1)
+        img += mean
+        return img
+    else:
+        return (img * 0.225 + 0.45).clip(min=0, max=1) * 255
