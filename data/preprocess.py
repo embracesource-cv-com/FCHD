@@ -22,14 +22,14 @@ class Rescale(object):
 
 class Normalize(object):
     def __init__(self, mode='caffe'):
-        assert mode in ('caffe', 'torch'), 'Wrong mode.'
+        assert mode in ('caffe', 'torch'), "Wrong mode, must be one of 'caffe' or 'torch'."
         self.mode = mode
 
     def __call__(self, sample):
         img = sample['img']
+        img = img[::-1, :, :]  # BGR -> RGB
 
         if self.mode == 'caffe':
-            img = img[[2, 1, 0], :, :]
             img = img * 255
             mean = np.array([122.7717, 115.9465, 102.9801]).reshape(3, 1, 1)
             img -= mean
@@ -38,8 +38,8 @@ class Normalize(object):
                                              std=[0.229, 0.224, 0.225])
             img = normalize(torch.from_numpy(img))
             img = img.numpy()
-        sample['img'] = img
 
+        sample['img'] = img
         return sample
 
 
