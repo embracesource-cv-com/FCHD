@@ -50,7 +50,6 @@ def train():
             if i % cfg.PLOT_INTERVAL == 0:
                 trainer.vis.plot_many(trainer.get_meter_data())
                 origin_img = inverse_normalize(img[0].cpu().numpy())
-                origin_img = origin_img[::-1, :, :]
                 gt_img = visdom_bbox(origin_img, boxes[0].cpu().numpy())
                 trainer.vis.img('gt_img', gt_img)
                 preds, _ = trainer.head_detector.predict(img, scale)
