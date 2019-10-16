@@ -8,22 +8,24 @@ def generate_anchors(base_size, ratios, scales):
     :param base_size: int, the size of the reference window.
     :param ratios: list of float, e.g. [0.5, 1., 2.]
     :param scales: list of int, e.g [8, 16, 32]
-    :return: nd-array, shape(size of scales * size of ratios, 4)
+    :return: 2d array, shape(size of scales * size of ratios, 4)
     """
-    scales = np.expand_dims(np.array(scales), axis=0)
-    ratios = np.expand_dims(np.array(ratios), axis=1)
+    scales = np.expand_dims(np.array(scales), axis=0)  # shape(1, size of scales)
+    ratios = np.expand_dims(np.array(ratios), axis=1)  # shape(size of ratios, 1)
 
     hs = base_size * scales * np.sqrt(ratios)
     ws = base_size * scales * np.sqrt(1 / ratios)
-    hs = hs.reshape(-1, 1)
-    ws = ws.reshape(-1, 1)
+    hs = hs.reshape(-1, 1)  # shape(size of scales * size of ratios, 1)
+    ws = ws.reshape(-1, 1)  # shape(size of scales * size of ratios, 1)
 
     ctr_x = ctr_y = 0.5 * (base_size - 1)
-    # the format is [y1, x1, y2, x2]
+
+    # the format is (y1, x1, y2, x2), shape(size of scales * size of ratios, 4)
     anchors = np.hstack((ctr_y - 0.5 * (hs - 1),
                          ctr_x - 0.5 * (ws - 1),
                          ctr_y + 0.5 * (hs - 1),
                          ctr_x + 0.5 * (ws - 1),))
+
     return np.round(anchors)
 
 

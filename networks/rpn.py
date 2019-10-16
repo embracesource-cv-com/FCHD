@@ -43,6 +43,13 @@ class RPN(nn.Module):
         return rpn_regr, rpn_cls, rois, rois_scores, anchors
 
     def _shift(self, h, w):
+        """
+        Generate all anchors in the origin image.
+
+        :param h: int, height of feature map
+        :param w: int, width os feature map
+        :return: 2d array, shape(h * w * size of base anchors, 4)
+        """
         shift_x = np.arange(w) * self.feat_stride
         shift_y = np.arange(h) * self.feat_stride
         shift_x, shift_y = np.meshgrid(shift_x, shift_y)
