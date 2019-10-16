@@ -4,7 +4,7 @@ from torchvision import transforms
 from data.dataset import HeadDataset
 from data.preprocess import Rescale, Normalize, inverse_normalize
 from config import cfg
-from utils.visualize import check_raw_data, check_transformed_data, visdom_bbox
+from utils.visualize import visdom_bbox
 import numpy as np
 import os
 from networks.detector import HeadDetector
@@ -26,7 +26,7 @@ def train():
     train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=True)
 
-    head_detector = HeadDetector(ratios=cfg.ANCHOR_RATIOS, scales=cfg.ANCHOR_SCALES)
+    head_detector = HeadDetector(ratios=[1], scales=[2, 4])
     trainer = Trainer(head_detector).cuda()
 
     print('[INFO] Start training...')
@@ -55,7 +55,7 @@ def train():
         print("\tValidate average accuracy: {:.3f}".format(avg_accuracy))
 
         time_str = time.strftime('%m%d%H%M')
-        save_path = os.path.join(cfg.MODEL_DIR, 'checkpoint_{}_{}.pth'.format(time_str, avg_accuracy))
+        save_path = os.path.join(cfg.MODEL_DIR, 'checkpoint_{}_{:.3f}.pth'.format(time_str, avg_accuracy))
         trainer.save(save_path)
         if epoch == 8:
             trainer.load(save_path)
