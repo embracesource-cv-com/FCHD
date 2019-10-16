@@ -7,31 +7,32 @@ from config import cfg
 
 
 class RPN(nn.Module):
-    def __init__(self, c_in=512, c_out=512, ratios=(0.5, 1, 2), scales=(8, 16, 32),
-                 feat_stride=16):
+    def __init__(self, ratios, scales, c_in=512, c_out=512, feat_stride=16):
         super(RPN, self).__init__()
         self.base_anchors = generate_anchors(cfg.ANCHOR_BASE_SIZE, ratios, scales)
-        self.feat_stride = feat_stride
         self.num_of_anchors = len(self.base_anchors)
-        self.proposal_layer = ProposalLayer(self)
         self.conv1 = nn.Conv2d(c_in, c_out, 3, padding=1)
         self.cls_layer = nn.Conv2d(c_out, 2 * self.num_of_anchors, 1)
         self.regr_layer = nn.Conv2d(c_out, 4 * self.num_of_anchors, 1)
+        self.feat_stride = feat_stride
         self._weight_init()
+        self.proposal_layer = ProposalLayer(self)
 
     def forward(self, feature_map, img_size, scale):
-        n, _, h, w = feature_map.size()
-        anchors = self._shift(h, w)
-        x = F.relu(self.conv1(feature_map))  # shape(n,512,30,40)
+        n, _, h, w = feature_map.size()  # shape(1,512,30,40)
 
-        rpn_regr = self.regr_layer(x)  # shape(n,8,30,40)
-        rpn_regr = rpn_regr.permute(0, 2, 3, 1).reshape(n, -1, 4)  # shape(n,2400,4)
+        anchors = self._shift(h, w)  # shape(2400,4)
 
-        rpn_cls = self.cls_layer(x)  # shape(n,4,30,40)
-        rpn_cls = rpn_cls.permute(0, 2, 3, 1)  # shape(n,30,40,4)
-        rpn_cls_fg = rpn_cls.reshape(n, h, w, self.num_of_anchors, 2)[:, :, :, :, 1]  # shape(n,30,40,2)
-        rpn_cls_fg = rpn_cls_fg.reshape(n, -1)  # shape(n,2400)
-        rpn_cls = rpn_cls.reshape(n, -1, 2)  # shape(n,2400,2)
+        x = F.relu(self.conv1(feature_map))  # shape(1,512,30,40)
+
+        rpn_regr = self.regr_layer(x)  # shape(1,8,30,40)
+        rpn_regr = rpn_regr.permute(0, 2, 3, 1).reshape(n, -1, 4)  # shape(1,2400,4)
+
+        rpn_cls = self.cls_layer(x)  # shape(1,4,30,40)
+        rpn_cls = rpn_cls.permute(0, 2, 3, 1)  # shape(1,30,40,4)
+        rpn_cls_fg = rpn_cls.reshape(n, h, w, self.num_of_anchors, 2)[:, :, :, :, 1]  # shape(1,30,40,2)
+        rpn_cls_fg = rpn_cls_fg.reshape(n, -1)  # shape(1,2400)
+        rpn_cls = rpn_cls.reshape(n, -1, 2)  # shape(1,2400,2)
 
         rois, rois_scores = self.proposal_layer(
             rpn_regr[0].detach().cpu().numpy(),
