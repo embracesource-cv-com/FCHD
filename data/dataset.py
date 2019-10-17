@@ -31,16 +31,16 @@ class HeadDataset(Dataset):
         with open(annots_path, 'r') as fp:
             for line in fp.readlines():
                 if ':' in line:
-                    # extract image name
+                    # Extract image name
                     img_name = re.search(r'"(.*)"', line).group(1)
                     img_path = os.path.join(self.dataset_dir, img_name)
 
-                    # extract coordinates
+                    # Extract coordinates
                     coords_list = re.findall(r'\d+\.\d+', line)
                     coords_list = list(map(float, coords_list))
                     assert len(coords_list) % 4 == 0, 'The number of coordinates must be divisible by 4.'
 
-                    # convert to numpy array
+                    # Converts to numpy array
                     counts = len(coords_list) // 4
                     boxes = np.array(coords_list).reshape(counts, 4)
                     boxes = boxes[:, [1, 0, 3, 2]]  # x1,y1,x2,y2 -> y1,x1,y2,x2
