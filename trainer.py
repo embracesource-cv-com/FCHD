@@ -20,45 +20,52 @@ class Trainer(nn.Module):
                                       'rpn_cls_loss',
                                       'total_loss'])
         self.vis = Visualizer(env=cfg.VISDOM_ENV)
-        self.rpn_cm = ConfusionMeter(2)
+        self.rpn_cm = ConfusionMeter(2)  # confusion matrix with 2 classes
         self.meters = {k: AverageValueMeter() for k in self.loss_tuple._fields}  # average loss
 
-    def forward(self, x, boxes, scale):
+    def forward(self, x, gt_boxes, scale):
         batch = x.size()[0]
-        if batch != 1:
-            raise ValueError('Currently only batch size 1 is supported.')
+        assert batch == 1, 'Currently only batch size 1 is supported.'
         img_size = x.size()[2:]
+
+        # Forward pass
         feature_map = self.head_detector.extractor(x)
-        rpn_regr, rpn_cls, rois, rois_scores, anchors = self.head_detector.rpn(feature_map, img_size, scale)
-        boxes, rpn_regr, rpn_cls = boxes[0], rpn_regr[0], rpn_cls[0]
+        rpn_regr, rpn_cls, _, _, anchors = self.head_detector.rpn(feature_map, img_size, scale)
 
-        gt_rpn_regr, gt_rpn_cls = self.anchor_target_layer(boxes.cpu().numpy(), anchors, img_size)
-        gt_rpn_regr = torch.from_numpy(gt_rpn_regr).cuda().float()
-        gt_rpn_cls = torch.from_numpy(gt_rpn_cls).cuda().long()
+        # Remove the batch dimension
+        gt_boxes, rpn_regr, rpn_cls = gt_boxes[0], rpn_regr[0], rpn_cls[0]
 
-        rpn_regr_loss = losses.rpn_regr_loss(rpn_regr, gt_rpn_regr, gt_rpn_cls)
-        rpn_cls_loss = F.cross_entropy(rpn_cls, gt_rpn_cls, ignore_index=-1)
+        # Generates GT regression targets and GT labels
+        gt_regr, gt_cls = self.anchor_target_layer(gt_boxes.numpy(), anchors, img_size)
+        gt_regr = torch.from_numpy(gt_regr).cuda().float()
+        gt_cls = torch.from_numpy(gt_cls).cuda().long()
+
+        # Computes loss
+        rpn_regr_loss = losses.rpn_regr_loss(rpn_regr, gt_regr, gt_cls)
+        rpn_cls_loss = F.cross_entropy(rpn_cls, gt_cls, ignore_index=-1)
         total_loss = rpn_regr_loss + rpn_cls_loss
         loss_list = [rpn_regr_loss, rpn_cls_loss, total_loss]
 
-        valid_gt_cls = gt_rpn_cls[gt_rpn_cls > -1]
-        valid_pred_cls = rpn_cls[gt_rpn_cls > -1]
+        # Ignore samples with a label = -1
+        valid_gt_cls = gt_cls[gt_cls > -1]
+        valid_pred_cls = rpn_cls[gt_cls > -1]
+
+        # Computes the confusion matrix
         self.rpn_cm.add(valid_pred_cls.detach(), valid_gt_cls.detach())
 
-        return self.loss_tuple(*loss_list), rois, rois_scores
+        return self.loss_tuple(*loss_list)
 
     def train_step(self, x, boxes, scale):
-        loss_tuple, _, _ = self.forward(x, boxes, scale)
+        loss_tuple = self.forward(x, boxes, scale)
         self.optimizer.zero_grad()
         loss_tuple.total_loss.backward()
         self.optimizer.step()
         self.update_meters(loss_tuple)
-        # return loss_tuple, rois, rois_scores
 
     def update_meters(self, loss_tuple):
-        loss_d = {k: v.item() for k, v in loss_tuple._asdict().items()}
+        loss_dict = {k: v.item() for k, v in loss_tuple._asdict().items()}
         for key, meter in self.meters.items():
-            meter.add(loss_d[key])
+            meter.add(loss_dict[key])
 
     def reset_meters(self):
         for meter in self.meters.values():
@@ -71,10 +78,7 @@ class Trainer(nn.Module):
     def save(self, path, save_optimizer=False):
         save_dict = dict()
         save_dict['model'] = self.head_detector.state_dict()
-        # save_dict['config'] = opt._state_dict()
-        # save_dict['other_info'] = kwargs
         save_dict['vis_info'] = self.vis.state_dict()
-
         if save_optimizer:
             save_dict['optimizer'] = self.optimizer.state_dict()
 
@@ -84,11 +88,8 @@ class Trainer(nn.Module):
     def load(self, path, load_optimizer=True):
         state_dict = torch.load(path)
         self.head_detector.load_state_dict(state_dict['model'])
-
-        if 'optimizer' in state_dict and load_optimizer:
+        if load_optimizer and 'optimizer' in state_dict:
             self.optimizer.load_state_dict(state_dict['optimizer'])
-
-        return self
 
     def scale_lr(self, decay=0.1):
         for param_group in self.optimizer.param_groups:
