@@ -18,7 +18,7 @@ class Config(object):
 
     ANCHOR_BASE_SIZE = 16
     ANCHOR_RATIOS = [1]
-    ANCHOR_SCALES = [8, 16]
+    ANCHOR_SCALES = [2, 4]
 
     EPOCHS = 15
     DEBUG = True
