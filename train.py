@@ -26,7 +26,7 @@ def train():
     train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=True)
 
-    head_detector = HeadDetector(ratios=[1], scales=[2, 4])
+    head_detector = HeadDetector(ratios=cfg.ANCHOR_RATIOS, scales=cfg.ANCHOR_SCALES)
     trainer = Trainer(head_detector).cuda()
 
     print('[INFO] Start training...')
