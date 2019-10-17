@@ -34,17 +34,19 @@ def train():
         trainer.reset_meters()
         for i, data in enumerate(train_dataloader, 1):
             img, boxes, scale = data['img'], data['boxes'], data['scale']
-            img, boxes = img.cuda().float(), boxes.cuda()
+            img = img.cuda().float()
             scale = scale.item()
 
+            # Forward pass and backward pass
             trainer.train_step(img, boxes, scale)
 
+            # Visualize on visdom
             if i % cfg.PLOT_INTERVAL == 0:
                 trainer.vis.plot_many(trainer.get_meter_data())
                 origin_img = inverse_normalize(img[0].cpu().numpy())
                 gt_img = visdom_bbox(origin_img, boxes[0].cpu().numpy())
                 trainer.vis.img('gt_img', gt_img)
-                preds, _ = trainer.head_detector.predict(img, scale)
+                preds, _ = head_detector(img, scale)
                 pred_img = visdom_bbox(origin_img, preds)
                 trainer.vis.img('pred_img', pred_img)
                 trainer.vis.text(str(trainer.rpn_cm.value().tolist()), win='rpn_cm')
@@ -58,7 +60,7 @@ def train():
         save_path = os.path.join(cfg.MODEL_DIR, 'checkpoint_{}_{:.3f}.pth'.format(time_str, avg_accuracy))
         trainer.save(save_path)
         if epoch == 8:
-            trainer.load(save_path)
+            # trainer.load(save_path)
             trainer.scale_lr()
 
 
@@ -71,7 +73,7 @@ def evaluate(val_dataloader, head_detector):
         img, boxes = img.cuda().float(), boxes.cuda()
         scale = scale.item()
 
-        preds, _ = head_detector.predict(img, scale)
+        preds, _ = head_detector(img, scale)
         gts = boxes[0].cpu().numpy()
         if len(preds) == 0:
             img_counts += 1
