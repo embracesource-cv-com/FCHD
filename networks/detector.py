@@ -22,20 +22,20 @@ class HeadDetector(nn.Module):
         feature_map = self.extractor(x)
         _, _, rois, rois_scores, _ = self.rpn(feature_map, img_size, scale)
 
-        # clip rois into image boundaries
+        # Clip rois into image boundaries
         rois[:, :4:2] = np.clip(rois[:, :4:2], 0, img_size[0])
         rois[:, 1:4:2] = np.clip(rois[:, 1:4:2], 0, img_size[1])
 
-        # softmax on rois scores
+        # Softmax on rois scores
         probs = F.softmax(torch.from_numpy(rois_scores))
         probs = probs.numpy()
 
-        # only keep rois with scores greater than the threshold
+        # Only keep rois with scores greater than the threshold
         mask = probs > score_thresh
         boxes = rois[mask]
         scores = probs[mask]
 
-        # nms
+        # NMS
         keep = tools.nms(np.hstack((boxes, scores.reshape(-1, 1))), nms_thresh)
         boxes = boxes[keep]
         scores = scores[keep]

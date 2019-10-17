@@ -4,6 +4,9 @@ from config import cfg
 
 
 class ProposalLayer(object):
+    """
+    Converts RPN outputs into proposals (rois).
+    """
     def __init__(self, parent_model):
         self.parent_model = parent_model
         self.nms_thresh = cfg.RPN_NMS_THRESH
@@ -29,22 +32,22 @@ class ProposalLayer(object):
         # bounding boxes regression with deltas
         proposals = tools.bbox_regression(anchors, deltas)
 
-        # clip boxes into image boundaries
+        # Clip boxes into image boundaries
         proposals = tools.clip_boxes(proposals, img_size)
 
-        # remove all boxes with any side smaller than min_size.
+        # Remove all boxes with any side smaller than min_size
         keep = tools.filter_boxes(proposals, self.min_size * scale)
         proposals = proposals[keep, :]
         scores = scores[keep]
 
-        # sort boxes in descending order by score
+        # Sort boxes in descending order by score
         order = scores.argsort()[::-1]
         if pre_nms_top_N > 0:
             order = order[:pre_nms_top_N]
         proposals = proposals[order, :]
         scores = scores[order]
 
-        # nms
+        # NMS
         keep = tools.nms(np.hstack((proposals, scores.reshape(-1, 1))), self.nms_thresh)
         if post_nms_top_N > 0:
             keep = keep[:post_nms_top_N]

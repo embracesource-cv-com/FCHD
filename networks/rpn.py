@@ -34,6 +34,7 @@ class RPN(nn.Module):
         rpn_cls_fg = rpn_cls_fg.reshape(n, -1)  # shape(1,2400)
         rpn_cls = rpn_cls.reshape(n, -1, 2)  # shape(1,2400,2)
 
+        # Converts RPN outputs into rois
         rois, rois_scores = self.proposal_layer(
             rpn_regr[0].detach().cpu().numpy(),
             rpn_cls_fg[0].detach().cpu().numpy(),
