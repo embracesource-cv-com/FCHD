@@ -2,10 +2,18 @@ import torch
 
 
 def rpn_regr_loss(pred_rger, gt_rger, gt_labels):
+    """
+    Calculate the regression loss of RPN
+
+    :param pred_rger:
+    :param gt_rger:
+    :param gt_labels:
+    :return:
+    """
     weights = torch.zeros(gt_rger.size()).cuda()
     weights[(gt_labels > 0).view(-1, 1).expand_as(weights).cuda()] = 1
     loss = smooth_l1_loss(pred_rger, gt_rger, weights)
-    loss /= (gt_labels >= 0).sum()  # ignore gt_labels == -1
+    loss /= (gt_labels >= 0).sum()  # ignore gt_labels == -1 (why not ignore labels=0?)
     return loss
 
 

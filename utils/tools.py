@@ -55,6 +55,12 @@ def bbox_regression(boxes, deltas):
 
 
 def bbox_transform(anchor_boxes, gt_boxes):
+    """
+    Generates regression targets
+    :param anchor_boxes:
+    :param gt_boxes:
+    :return:
+    """
     anchor_hs = anchor_boxes[:, 2] - anchor_boxes[:, 0]
     anchor_ws = anchor_boxes[:, 3] - anchor_boxes[:, 1]
     anchor_ctr_y = anchor_boxes[:, 0] + 0.5 * anchor_hs
