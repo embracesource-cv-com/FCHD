@@ -21,11 +21,12 @@ class Config(object):
     ANCHOR_SCALES = [2, 4]
 
     EPOCHS = 15
-    DEBUG = True
     PRINT_LOG = True
     PLOT_INTERVAL = 2
     VISDOM_ENV = 'fchd'
+
     MODEL_DIR = './checkpoints'
+    BEST_MODEL_PATH = './checkpoints/checkpoint_10161729_0.907.pth'
 
 
 cfg = Config()
