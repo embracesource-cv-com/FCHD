@@ -14,6 +14,7 @@ import time
 
 
 def train():
+    # Load data
     train_annots_path = os.path.join(cfg.DATASET_DIR, cfg.TRAIN_ANNOTS_FILE)
     val_annots_path = os.path.join(cfg.DATASET_DIR, cfg.VAL_ANNOTS_FILE)
     transform = transforms.Compose([Rescale(), Normalize()])
@@ -26,6 +27,7 @@ def train():
     train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=True)
 
+    # Create HeadDetector instance and Trainer instance
     head_detector = HeadDetector(ratios=cfg.ANCHOR_RATIOS, scales=cfg.ANCHOR_SCALES)
     trainer = Trainer(head_detector).cuda()
 
@@ -51,16 +53,18 @@ def train():
                 trainer.vis.img('pred_img', pred_img)
                 trainer.vis.text(str(trainer.rpn_cm.value().tolist()), win='rpn_cm')
 
+        # Evaluation
         avg_accuracy = evaluate(val_dataloader, head_detector)
-
         print("[INFO] Epoch {} of {}.".format(epoch + 1, cfg.EPOCHS))
         print("\tValidate average accuracy: {:.3f}".format(avg_accuracy))
 
+        # Save current model
         time_str = time.strftime('%m%d%H%M')
         save_path = os.path.join(cfg.MODEL_DIR, 'checkpoint_{}_{:.3f}.pth'.format(time_str, avg_accuracy))
         trainer.save(save_path)
+
+        # Learning rate decay
         if epoch == 8:
-            # trainer.load(save_path)
             trainer.scale_lr()
 
 
