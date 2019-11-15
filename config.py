@@ -26,7 +26,7 @@ class Config(object):
     VISDOM_ENV = 'fchd'
 
     MODEL_DIR = './checkpoints'
-    BEST_MODEL_PATH = './checkpoints/checkpoint_10161729_0.907.pth'
+    BEST_MODEL_PATH = './checkpoints/checkpoint_best.pth'
 
 
 cfg = Config()
