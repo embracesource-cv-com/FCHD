@@ -23,10 +23,11 @@
 4. 将brainwash数据集放到/home/dataset/fchd_datas目录下  
 > 当然你可以自定义各个路径，然后在config.py中修改相应的配置
 
-## 预测
-    ```
-    python predict.py -p [path of image]
-    ```
+## 预测  
+在工程root目录下执行:  
+```
+python predict.py -p [path of image]
+```
 
 ## 训练
 1. 打开可视化工具visdom:
